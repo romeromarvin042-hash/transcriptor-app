@@ -1,7 +1,7 @@
 {
   "name": "Transcriptor Personal de Jaime Romero",
   "short_name": "Transcriptor JR",
-  "description": "Aplicación de transcripción personal de Jaime Romero. Uso exclusivo.",
+  "description": "AplicaciÃ³n de transcripciÃ³n personal de Jaime Romero. Uso exclusivo.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e3a8a",
