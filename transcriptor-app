@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Jaime Romero - Uso Personal Exclusivo">
+  <meta name="description" content="Aplicaci�n de transcripci�n personal de Jaime Romero para sermones extensos. Prohibida la modificaci�n o uso comercial sin permiso del autor.">
+  <title>Transcriptor Personal de Jaime Romero</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e40af">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@400;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .gothic-font {
+      font-family: 'Cinzel', serif;
+    }
+  </style>
+</head>
+<body class="bg-blue-950 min-h-screen flex items-center justify-center">
+  <!-- Aplicaci�n de Transcripci�n Personal - Propiedad de Jaime Romero -->
+  <div class="bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-lg">
+    <h1 class="text-3xl font-semibold text-white mb-4 text-center gothic-font">Transcriptor Personal de Jaime Romero</h1>
+    <p class="text-gray-400 text-sm mb-4 text-center gothic-font">Propiedad de Jaime Romero - Uso Personal Exclusivo</p>
+    <div class="flex items-center justify-center mb-4">
+      <label for="language" class="text-gray-400 text-sm mr-2">Idioma:</label>
+      <select id="language" class="bg-gray-800 text-gray-200 border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="es-ES">Espa�ol</option>
+        <option value="en-US">Ingl�s</option>
+      </select>
+    </div>
+    <p id="status" class="text-gray-400 text-sm mb-6 text-center">Inicia la transcripci�n con micr�fono o carga un archivo MP3</p>
+    <textarea id="transcript" class="w-full h-96 p-4 bg-gray-800 text-gray-200 border border-gray-700 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 overflow-y-auto resize-y" placeholder="El texto transcrito aparecer� aqu�..."></textarea>
+    <div class="grid grid-cols-2 gap-4 mt-6">
+      <button id="startMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Iniciar Micr�fono</button>
+      <button id="stopMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" disabled>Detener Micr�fono</button>
+      <input type="file" id="audioFile" accept="audio/mp3" class="hidden" />
+      <button id="uploadBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Cargar MP3</button>
+      <button id="correctBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Autocorregir</button>
+      <button id="copyBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Copiar Texto</button>
+      <button id="pasteBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Pegar Texto</button>
+    </div>
+    <p class="text-gray-500 text-xs mt-6 text-center gothic-font">� 2025 Jaime Romero. Prohibida la reproducci�n, modificaci�n o uso comercial sin autorizaci�n.</p>
+  </div>
+
+  <script>
+    /*
+     * Transcriptor Personal de Jaime Romero
+     * Propiedad exclusiva de Jaime Romero
+     * Creado para uso personal y sermones extensos sin l�mite de duraci�n. Prohibida la modificaci�n, distribuci�n o uso comercial sin permiso expreso del autor.
+     * Contacto: [A�ade tu correo o medio de contacto si lo deseas]
+     */
+
+    const startMicBtn = document.getElementById('startMicBtn');
+    const stopMicBtn = document.getElementById('stopMicBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const audioFile = document.getElementById('audioFile');
+    const correctBtn = document.getElementById('correctBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const transcript = document.getElementById('transcript');
+    const status = document.getElementById('status');
+    const languageSelect = document.getElementById('language');
+
+    let recognition;
+    let audioContext;
+    let audioElement;
+    let stream;
+    let source;
+    let destination;
+    let isTranscribing = false;
+
+    // Verificar soporte para Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      status.textContent = 'Lo siento, tu navegador no soporta la API de reconocimiento de voz.';
+      startMicBtn.disabled = true;
+      uploadBtn.disabled = true;
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.lang = languageSelect.value; // Idioma inicial
+      recognition.interimResults = true; // Mostrar resultados parciales
+      recognition.continuous = true; // Continuar escuchando
+    }
+
+    let interimTranscript = '';
+    let finalTranscript = '';
+
+    // Reinicio peri�dico para grabaciones largas
+    function scheduleRecognitionRestart() {
+      if (isTranscribing) {
+        setTimeout(() => {
+          if (isTranscribing) {
+            recognition.stop();
+            // El evento onend manejar� el reinicio
+          }
+        }, 60000); // Reinicia cada 60 segundos
+      }
+    }
+
+    // Actualizar idioma cuando cambia la selecci�n
+    if (recognition) {
+      languageSelect.addEventListener('change', () => {
+        recognition.lang = languageSelect.value;
+        status.textContent = `Idioma cambiado a ${languageSelect.options[languageSelect.selectedIndex].text}.`;
+      });
+
+      // Manejo de resultados de transcripci�n
+      recognition.onresult = (event) => {
+        interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const text = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += text + ' ';
+          } else {
+            interimTranscript += text;
+          }
+        }
+        transcript.value = finalTranscript + interimTranscript;
+        transcript.scrollTop = transcript.scrollHeight; // Auto-scroll al final
+      };
+
+      recognition.onstart = () => {
+        isTranscribing = true;
+        status.textContent = 'Transcribiendo... Habla o reproduce el audio.';
+        startMicBtn.disabled = true;
+        stopMicBtn.disabled = false;
+        uploadBtn.disabled = true;
+        scheduleRecognitionRestart(); // Programar reinicio
+      };
+
+      recognition.onend = () => {
+        if (isTranscribing) {
+          // Reiniciar transcripci�n autom�ticamente si sigue activa
+          try {
+            recognition.start();
+          } catch (err) {
+            status.textContent = `Error al reiniciar transcripci�n: ${err.message}`;
+            cleanupAudio();
+            startMicBtn.disabled = false;
+            stopMicBtn.disabled = true;
+            uploadBtn.disabled = false;
+            isTranscribing = false;
+          }
+        } else {
+          status.textContent = 'Transcripci�n detenida. Presiona un bot�n para continuar.';
+          startMicBtn.disabled = false;
+          stopMicBtn.disabled = true;
+          uploadBtn.disabled = false;
+          cleanupAudio();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        status.textContent = `Error en transcripci�n: ${event.error}. Intenta de nuevo.`;
+        startMicBtn.disabled = false;
+        stopMicBtn.disabled = true;
+        uploadBtn.disabled = false;
+        isTranscribing = false;
+        cleanupAudio();
+      };
+    }
+
+    // Funci�n para limpiar recursos de audio
+    function cleanupAudio() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (audioElement) {
+        audioElement.pause();
+        audioElement = null;
+      }
+      if (source) {
+        source.disconnect();
+        source = null;
+      }
+      if (destination) {
+        destination = null;
+      }
+      if (audioContext) {
+        audioContext.close().catch(() => {});
+        audioContext = null;
+      }
+    }
+
+    // Transcripci�n desde micr�fono
+    startMicBtn.addEventListener('click', async () => {
+      if (!recognition) return;
+      try {
+        finalTranscript = transcript.value; // Conservar texto existente
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        isTranscribing = true;
+        recognition.start();
+      } catch (err) {
+        status.textContent = `Error al acceder al micr�fono: ${err.message}`;
+      }
+    });
+
+    stopMicBtn.addEventListener('click', () => {
+      if (recognition) {
+        isTranscribing = false;
+        recognition.stop();
+      }
+      cleanupAudio();
+    });
+
+    // Cargar y transcribir archivo MP3
+    uploadBtn.addEventListener('click', () => {
+      audioFile.click();
+    });
+
+    audioFile.addEventListener('change', async (event) => {
+      if (!recognition) return;
+      const file = event.target.files[0];
+      if (!file || !file.type.includes('audio/mp3')) {
+        status.textContent = 'Por favor, selecciona un archivo MP3 v�lido.';
+        return;
+      }
+
+      try {
+        finalTranscript = transcript.value; // Conservar texto existente
+        audioElement = new Audio(URL.createObjectURL(file));
+        audioContext = new AudioContext();
+        source = audioContext.createMediaElementSource(audioElement);
+        destination = audioContext.createMediaStreamDestination();
+        source.connect(destination);
+        source.connect(audioContext.destination); // Conectar al destino para reproducci�n
+
+        // Usar el stream de destino para transcripci�n
+        isTranscribing = true;
+        recognition.start();
+        audioElement.play();
+        status.textContent = 'Reproduciendo y transcribiendo MP3...';
+
+        audioElement.onended = () => {
+          isTranscribing = false;
+          recognition.stop();
+          status.textContent = 'Transcripci�n de MP3 completada.';
+          cleanupAudio(); // Limpiar recursos al finalizar
+        };
+
+        audioElement.onerror = () => {
+          status.textContent = 'Error al reproducir el archivo MP3.';
+          isTranscribing = false;
+          recognition.stop();
+          cleanupAudio();
+        };
+      } catch (err) {
+        status.textContent = `Error al procesar el MP3: ${err.message}`;
+        isTranscribing = false;
+        cleanupAudio();
+      }
+    });
+
+    // Autocorrector biling�e
+    correctBtn.addEventListener('click', () => {
+      let text = transcript.value;
+      const corrections = {
+        'es-ES': {
+          'k': 'que',
+          'q': 'que',
+          'aser': 'hacer',
+          'haser': 'hacer',
+          'ablar': 'hablar',
+          'ke': 'que',
+          'kiero': 'quiero',
+          'kien': 'qui�n',
+          'porq': 'porque',
+          'porqe': 'porque'
+        },
+        'en-US': {
+          'teh': 'the',
+          'thier': 'their',
+          'i': 'I',
+          'dont': 'don\'t',
+          'cant': 'can\'t',
+          'wont': 'won\'t',
+          'alot': 'a lot',
+          'your': 'you\'re',
+          'its': 'it\'s',
+          'then': 'than'
+        }
+      };
+
+      const currentLang = languageSelect.value;
+      const langCorrections = corrections[currentLang] || {};
+      for (let wrong in langCorrections) {
+        const regex = new RegExp(`\\b${wrong}\\b`, 'gi');
+        text = text.replace(regex, langCorrections[wrong]);
+      }
+      transcript.value = text;
+      status.textContent = 'Texto autocorregido.';
+    });
+
+    // Copiar texto
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(transcript.value);
+        status.textContent = 'Texto copiado al portapapeles.';
+      } catch (err) {
+        status.textContent = 'Error al copiar el texto.';
+      }
+    });
+
+    // Pegar texto
+    pasteBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        transcript.value = text;
+        status.textContent = 'Texto pegado desde el portapapeles.';
+      } catch (err) {
+        status.textContent = 'Error al pegar el texto. Aseg�rate de tener permisos.';
+      }
+    });
+
+    // Registro del Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((registration) => {
+            console.log('Service Worker registrado con �xito:', registration);
+          })
+          .catch((error) => {
+            console.log('Error al registrar Service Worker:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
+{
+  "name": "Transcriptor Personal de Jaime Romero",
+  "short_name": "Transcriptor JR",
+  "description": "Aplicaci�n de transcripci�n personal de Jaime Romero. Uso exclusivo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+const CACHE_NAME = 'transcriptor-jr-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        return response || fetch(event.request);
+      })
+  );
+});
