@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Jaime Romero - Uso Personal Exclusivo">
+  <meta name="description" content="Aplicación de transcripción personal de Jaime Romero para sermones extensos. Prohibida la modificación o uso comercial sin permiso del autor.">
+  <title>Transcriptor Personal de Jaime Romero</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e40af">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@400;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .gothic-font {
+      font-family: 'Cinzel', serif;
+    }
+  </style>
+</head>
+<body class="bg-blue-950 min-h-screen flex items-center justify-center">
+  <!-- Aplicación de Transcripción Personal - Propiedad de Jaime Romero -->
+  <div class="bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-lg">
+    <h1 class="text-3xl font-semibold text-white mb-4 text-center gothic-font">Transcriptor Personal de Jaime Romero</h1>
+    <p class="text-gray-400 text-sm mb-4 text-center gothic-font">Propiedad de Jaime Romero - Uso Personal Exclusivo</p>
+    <div class="flex items-center justify-center mb-4">
+      <label for="language" class="text-gray-400 text-sm mr-2">Idioma:</label>
+      <select id="language" class="bg-gray-800 text-gray-200 border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="es-ES">Español</option>
+        <option value="en-US">Inglés</option>
+      </select>
+    </div>
+    <p id="status" class="text-gray-400 text-sm mb-6 text-center">Inicia la transcripción con micrófono o carga un archivo MP3</p>
+    <textarea id="transcript" class="w-full h-96 p-4 bg-gray-800 text-gray-200 border border-gray-700 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 overflow-y-auto resize-y" placeholder="El texto transcrito aparecerá aquí..."></textarea>
+    <div class="grid grid-cols-2 gap-4 mt-6">
+      <button id="startMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Iniciar Micrófono</button>
+      <button id="stopMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" disabled>Detener Micrófono</button>
+      <input type="file" id="audioFile" accept="audio/mp3" class="hidden" />
+      <button id="uploadBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Cargar MP3</button>
+      <button id="correctBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Autocorregir</button>
+      <button id="copyBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Copiar Texto</button>
+      <button id="pasteBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Pegar Texto</button>
+    </div>
+    <p class="text-gray-500 text-xs mt-6 text-center gothic-font">© 2025 Jaime Romero. Prohibida la reproducción, modificación o uso comercial sin autorización.</p>
+  </div>
+
+  <script>
+    /*
+     * Transcriptor Personal de Jaime Romero
+     * Propiedad exclusiva de Jaime Romero
+     * Creado para uso personal y sermones extensos sin límite de duración. Prohibida la modificación, distribución o uso comercial sin permiso expreso del autor.
+     * Contacto: [Añade tu correo o medio de contacto si lo deseas]
+     */
+
+    const startMicBtn = document.getElementById('startMicBtn');
+    const stopMicBtn = document.getElementById('stopMicBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const audioFile = document.getElementById('audioFile');
+    const correctBtn = document.getElementById('correctBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const transcript = document.getElementById('transcript');
+    const status = document.getElementById('status');
+    const languageSelect = document.getElementById('language');
+
+    let recognition;
+    let audioContext;
+    let audioElement;
+    let stream;
+    let source;
+    let destination;
+    let isTranscribing = false;
+
+    // Verificar soporte para Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      status.textContent = 'Lo siento, tu navegador no soporta la API de reconocimiento de voz.';
+      startMicBtn.disabled = true;
+      uploadBtn.disabled = true;
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.lang = languageSelect.value; // Idioma inicial
+      recognition.interimResults = true; // Mostrar resultados parciales
+      recognition.continuous = true; // Continuar escuchando
+    }
+
+    let interimTranscript = '';
+    let finalTranscript = '';
+
+    // Reinicio periódico para grabaciones largas
+    function scheduleRecognitionRestart() {
+      if (isTranscribing) {
+        setTimeout(() => {
+          if (isTranscribing) {
+            recognition.stop();
+            // El evento onend manejará el reinicio
+          }
+        }, 60000); // Reinicia cada 60 segundos
+      }
+    }
+
+    // Actualizar idioma cuando cambia la selección
+    if (recognition) {
+      languageSelect.addEventListener('change', () => {
+        recognition.lang = languageSelect.value;
+        status.textContent = `Idioma cambiado a ${languageSelect.options[languageSelect.selectedIndex].text}.`;
+      });
+
+      // Manejo de resultados de transcripción
+      recognition.onresult = (event) => {
+        interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const text = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += text + ' ';
+          } else {
+            interimTranscript += text;
+          }
+        }
+        transcript.value = finalTranscript + interimTranscript;
+        transcript.scrollTop = transcript.scrollHeight; // Auto-scroll al final
+      };
+
+      recognition.onstart = () => {
+        isTranscribing = true;
+        status.textContent = 'Transcribiendo... Habla o reproduce el audio.';
+        startMicBtn.disabled = true;
+        stopMicBtn.disabled = false;
+        uploadBtn.disabled = true;
+        scheduleRecognitionRestart(); // Programar reinicio
+      };
+
+      recognition.onend = () => {
+        if (isTranscribing) {
+          // Reiniciar transcripción automáticamente si sigue activa
+          try {
+            recognition.start();
+          } catch (err) {
+            status.textContent = `Error al reiniciar transcripción: ${err.message}`;
+            cleanupAudio();
+            startMicBtn.disabled = false;
+            stopMicBtn.disabled = true;
+            uploadBtn.disabled = false;
+            isTranscribing = false;
+          }
+        } else {
+          status.textContent = 'Transcripción detenida. Presiona un botón para continuar.';
+          startMicBtn.disabled = false;
+          stopMicBtn.disabled = true;
+          uploadBtn.disabled = false;
+          cleanupAudio();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        status.textContent = `Error en transcripción: ${event.error}. Intenta de nuevo.`;
+        startMicBtn.disabled = false;
+        stopMicBtn.disabled = true;
+        uploadBtn.disabled = false;
+        isTranscribing = false;
+        cleanupAudio();
+      };
+    }
+
+    // Función para limpiar recursos de audio
+    function cleanupAudio() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (audioElement) {
+        audioElement.pause();
+        audioElement = null;
+      }
+      if (source) {
+        source.disconnect();
+        source = null;
+      }
+      if (destination) {
+        destination = null;
+      }
+      if (audioContext) {
+        audioContext.close().catch(() => {});
+        audioContext = null;
+      }
+    }
+
+    // Transcripción desde micrófono
+    startMicBtn.addEventListener('click', async () => {
+      if (!recognition) return;
+      try {
+        finalTranscript = transcript.value; // Conservar texto existente
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        isTranscribing = true;
+        recognition.start();
+      } catch (err) {
+        status.textContent = `Error al acceder al micrófono: ${err.message}`;
+      }
+    });
+
+    stopMicBtn.addEventListener('click', () => {
+      if (recognition) {
+        isTranscribing = false;
+        recognition.stop();
+      }
+      cleanupAudio();
+    });
+
+    // Cargar y transcribir archivo MP3
+    uploadBtn.addEventListener('click', () => {
+      audioFile.click();
+    });
+
+    audioFile.addEventListener('change', async (event) => {
+      if (!recognition) return;
+      const file = event.target.files[0];
+      if (!file || !file.type.includes('audio/mp3')) {
+        status.textContent = 'Por favor, selecciona un archivo MP3 válido.';
+        return;
+      }
+
+      try {
+        finalTranscript = transcript.value; // Conservar texto existente
+        audioElement = new Audio(URL.createObjectURL(file));
+        audioContext = new AudioContext();
+        source = audioContext.createMediaElementSource(audioElement);
+        destination = audioContext.createMediaStreamDestination();
+        source.connect(destination);
+        source.connect(audioContext.destination); // Conectar al destino para reproducción
+
+        // Usar el stream de destino para transcripción
+        isTranscribing = true;
+        recognition.start();
+        audioElement.play();
+        status.textContent = 'Reproduciendo y transcribiendo MP3...';
+
+        audioElement.onended = () => {
+          isTranscribing = false;
+          recognition.stop();
+          status.textContent = 'Transcripción de MP3 completada.';
+          cleanupAudio(); // Limpiar recursos al finalizar
+        };
+
+        audioElement.onerror = () => {
+          status.textContent = 'Error al reproducir el archivo MP3.';
+          isTranscribing = false;
+          recognition.stop();
+          cleanupAudio();
+        };
+      } catch (err) {
+        status.textContent = `Error al procesar el MP3: ${err.message}`;
+        isTranscribing = false;
+        cleanupAudio();
+      }
+    });
+
+    // Autocorrector bilingüe
+    correctBtn.addEventListener('click', () => {
+      let text = transcript.value;
+      const corrections = {
+        'es-ES': {
+          'k': 'que',
+          'q': 'que',
+          'aser': 'hacer',
+          'haser': 'hacer',
+          'ablar': 'hablar',
+          'ke': 'que',
+          'kiero': 'quiero',
+          'kien': 'quién',
+          'porq': 'porque',
+          'porqe': 'porque'
+        },
+        'en-US': {
+          'teh': 'the',
+          'thier': 'their',
+          'i': 'I',
+          'dont': 'don\'t',
+          'cant': 'can\'t',
+          'wont': 'won\'t',
+          'alot': 'a lot',
+          'your': 'you\'re',
+          'its': 'it\'s',
+          'then': 'than'
+        }
+      };
+
+      const currentLang = languageSelect.value;
+      const langCorrections = corrections[currentLang] || {};
+      for (let wrong in langCorrections) {
+        const regex = new RegExp(`\\b${wrong}\\b`, 'gi');
+        text = text.replace(regex, langCorrections[wrong]);
+      }
+      transcript.value = text;
+      status.textContent = 'Texto autocorregido.';
+    });
+
+    // Copiar texto
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(transcript.value);
+        status.textContent = 'Texto copiado al portapapeles.';
+      } catch (err) {
+        status.textContent = 'Error al copiar el texto.';
+      }
+    });
+
+    // Pegar texto
+    pasteBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        transcript.value = text;
+        status.textContent = 'Texto pegado desde el portapapeles.';
+      } catch (err) {
+        status.textContent = 'Error al pegar el texto. Asegúrate de tener permisos.';
+      }
+    });
+
+    // Registro del Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((registration) => {
+            console.log('Service Worker registrado con éxito:', registration);
+          })
+          .catch((error) => {
+            console.log('Error al registrar Service Worker:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
