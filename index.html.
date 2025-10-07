@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="Jaime Romero - Uso Personal Exclusivo">
-  <meta name="description" content="Aplicación de transcripción personal de Jaime Romero para sermones extensos. Prohibida la modificación o uso comercial sin permiso del autor.">
+  <meta name="description" content="AplicaciÃ³n de transcripciÃ³n personal de Jaime Romero para sermones extensos. Prohibida la modificaciÃ³n o uso comercial sin permiso del autor.">
   <title>Transcriptor Personal de Jaime Romero</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e40af">
@@ -20,37 +20,37 @@
   </style>
 </head>
 <body class="bg-blue-950 min-h-screen flex items-center justify-center">
-  <!-- Aplicación de Transcripción Personal - Propiedad de Jaime Romero -->
+  <!-- AplicaciÃ³n de TranscripciÃ³n Personal - Propiedad de Jaime Romero -->
   <div class="bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-lg">
     <h1 class="text-3xl font-semibold text-white mb-4 text-center gothic-font">Transcriptor Personal de Jaime Romero</h1>
     <p class="text-gray-400 text-sm mb-4 text-center gothic-font">Propiedad de Jaime Romero - Uso Personal Exclusivo</p>
     <div class="flex items-center justify-center mb-4">
       <label for="language" class="text-gray-400 text-sm mr-2">Idioma:</label>
       <select id="language" class="bg-gray-800 text-gray-200 border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="es-ES">Español</option>
-        <option value="en-US">Inglés</option>
+        <option value="es-ES">EspaÃ±ol</option>
+        <option value="en-US">InglÃ©s</option>
       </select>
     </div>
-    <p id="status" class="text-gray-400 text-sm mb-6 text-center">Inicia la transcripción con micrófono o carga un archivo MP3</p>
-    <textarea id="transcript" class="w-full h-96 p-4 bg-gray-800 text-gray-200 border border-gray-700 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 overflow-y-auto resize-y" placeholder="El texto transcrito aparecerá aquí..."></textarea>
+    <p id="status" class="text-gray-400 text-sm mb-6 text-center">Inicia la transcripciÃ³n con micrÃ³fono o carga un archivo MP3</p>
+    <textarea id="transcript" class="w-full h-96 p-4 bg-gray-800 text-gray-200 border border-gray-700 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 overflow-y-auto resize-y" placeholder="El texto transcrito aparecerÃ¡ aquÃ­..."></textarea>
     <div class="grid grid-cols-2 gap-4 mt-6">
-      <button id="startMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Iniciar Micrófono</button>
-      <button id="stopMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" disabled>Detener Micrófono</button>
+      <button id="startMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Iniciar MicrÃ³fono</button>
+      <button id="stopMicBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" disabled>Detener MicrÃ³fono</button>
       <input type="file" id="audioFile" accept="audio/mp3" class="hidden" />
       <button id="uploadBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Cargar MP3</button>
       <button id="correctBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Autocorregir</button>
       <button id="copyBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Copiar Texto</button>
       <button id="pasteBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">Pegar Texto</button>
     </div>
-    <p class="text-gray-500 text-xs mt-6 text-center gothic-font">© 2025 Jaime Romero. Prohibida la reproducción, modificación o uso comercial sin autorización.</p>
+    <p class="text-gray-500 text-xs mt-6 text-center gothic-font">Â© 2025 Jaime Romero. Prohibida la reproducciÃ³n, modificaciÃ³n o uso comercial sin autorizaciÃ³n.</p>
   </div>
 
   <script>
     /*
      * Transcriptor Personal de Jaime Romero
      * Propiedad exclusiva de Jaime Romero
-     * Creado para uso personal y sermones extensos sin límite de duración. Prohibida la modificación, distribución o uso comercial sin permiso expreso del autor.
-     * Contacto: [Añade tu correo o medio de contacto si lo deseas]
+     * Creado para uso personal y sermones extensos sin lÃ­mite de duraciÃ³n. Prohibida la modificaciÃ³n, distribuciÃ³n o uso comercial sin permiso expreso del autor.
+     * Contacto: [AÃ±ade tu correo o medio de contacto si lo deseas]
      */
 
     const startMicBtn = document.getElementById('startMicBtn');
@@ -88,26 +88,26 @@
     let interimTranscript = '';
     let finalTranscript = '';
 
-    // Reinicio periódico para grabaciones largas
+    // Reinicio periÃ³dico para grabaciones largas
     function scheduleRecognitionRestart() {
       if (isTranscribing) {
         setTimeout(() => {
           if (isTranscribing) {
             recognition.stop();
-            // El evento onend manejará el reinicio
+            // El evento onend manejarÃ¡ el reinicio
           }
         }, 60000); // Reinicia cada 60 segundos
       }
     }
 
-    // Actualizar idioma cuando cambia la selección
+    // Actualizar idioma cuando cambia la selecciÃ³n
     if (recognition) {
       languageSelect.addEventListener('change', () => {
         recognition.lang = languageSelect.value;
         status.textContent = `Idioma cambiado a ${languageSelect.options[languageSelect.selectedIndex].text}.`;
       });
 
-      // Manejo de resultados de transcripción
+      // Manejo de resultados de transcripciÃ³n
       recognition.onresult = (event) => {
         interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -133,11 +133,11 @@
 
       recognition.onend = () => {
         if (isTranscribing) {
-          // Reiniciar transcripción automáticamente si sigue activa
+          // Reiniciar transcripciÃ³n automÃ¡ticamente si sigue activa
           try {
             recognition.start();
           } catch (err) {
-            status.textContent = `Error al reiniciar transcripción: ${err.message}`;
+            status.textContent = `Error al reiniciar transcripciÃ³n: ${err.message}`;
             cleanupAudio();
             startMicBtn.disabled = false;
             stopMicBtn.disabled = true;
@@ -145,7 +145,7 @@
             isTranscribing = false;
           }
         } else {
-          status.textContent = 'Transcripción detenida. Presiona un botón para continuar.';
+          status.textContent = 'TranscripciÃ³n detenida. Presiona un botÃ³n para continuar.';
           startMicBtn.disabled = false;
           stopMicBtn.disabled = true;
           uploadBtn.disabled = false;
@@ -154,7 +154,7 @@
       };
 
       recognition.onerror = (event) => {
-        status.textContent = `Error en transcripción: ${event.error}. Intenta de nuevo.`;
+        status.textContent = `Error en transcripciÃ³n: ${event.error}. Intenta de nuevo.`;
         startMicBtn.disabled = false;
         stopMicBtn.disabled = true;
         uploadBtn.disabled = false;
@@ -163,7 +163,7 @@
       };
     }
 
-    // Función para limpiar recursos de audio
+    // FunciÃ³n para limpiar recursos de audio
     function cleanupAudio() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -186,7 +186,7 @@
       }
     }
 
-    // Transcripción desde micrófono
+    // TranscripciÃ³n desde micrÃ³fono
     startMicBtn.addEventListener('click', async () => {
       if (!recognition) return;
       try {
@@ -195,7 +195,7 @@
         isTranscribing = true;
         recognition.start();
       } catch (err) {
-        status.textContent = `Error al acceder al micrófono: ${err.message}`;
+        status.textContent = `Error al acceder al micrÃ³fono: ${err.message}`;
       }
     });
 
@@ -216,7 +216,7 @@
       if (!recognition) return;
       const file = event.target.files[0];
       if (!file || !file.type.includes('audio/mp3')) {
-        status.textContent = 'Por favor, selecciona un archivo MP3 válido.';
+        status.textContent = 'Por favor, selecciona un archivo MP3 vÃ¡lido.';
         return;
       }
 
@@ -227,9 +227,9 @@
         source = audioContext.createMediaElementSource(audioElement);
         destination = audioContext.createMediaStreamDestination();
         source.connect(destination);
-        source.connect(audioContext.destination); // Conectar al destino para reproducción
+        source.connect(audioContext.destination); // Conectar al destino para reproducciÃ³n
 
-        // Usar el stream de destino para transcripción
+        // Usar el stream de destino para transcripciÃ³n
         isTranscribing = true;
         recognition.start();
         audioElement.play();
@@ -238,7 +238,7 @@
         audioElement.onended = () => {
           isTranscribing = false;
           recognition.stop();
-          status.textContent = 'Transcripción de MP3 completada.';
+          status.textContent = 'TranscripciÃ³n de MP3 completada.';
           cleanupAudio(); // Limpiar recursos al finalizar
         };
 
@@ -255,7 +255,7 @@
       }
     });
 
-    // Autocorrector bilingüe
+    // Autocorrector bilingÃ¼e
     correctBtn.addEventListener('click', () => {
       let text = transcript.value;
       const corrections = {
@@ -267,7 +267,7 @@
           'ablar': 'hablar',
           'ke': 'que',
           'kiero': 'quiero',
-          'kien': 'quién',
+          'kien': 'quiÃ©n',
           'porq': 'porque',
           'porqe': 'porque'
         },
@@ -312,7 +312,7 @@
         transcript.value = text;
         status.textContent = 'Texto pegado desde el portapapeles.';
       } catch (err) {
-        status.textContent = 'Error al pegar el texto. Asegúrate de tener permisos.';
+        status.textContent = 'Error al pegar el texto. AsegÃºrate de tener permisos.';
       }
     });
 
@@ -321,7 +321,7 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
           .then((registration) => {
-            console.log('Service Worker registrado con éxito:', registration);
+            console.log('Service Worker registrado con Ã©xito:', registration);
           })
           .catch((error) => {
             console.log('Error al registrar Service Worker:', error);
@@ -330,4 +330,5 @@
     }
   </script>
 </body>
+
 </html>
