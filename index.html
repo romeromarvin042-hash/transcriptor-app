@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcriptor Personal de Jaime Romero</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="https://via.placeholder.com/192">
+</head>
+
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-4" style="font-family: 'Cinzel', serif;">
+      Transcriptor Personal de Jaime Romero
+    </h1>
+    <p class="text-center text-gray-600 mb-6">
+      Propiedad de Jaime Romero - Uso Personal Exclusivo
+    </p>
+    <div class="mb-4">
+      <label for="language" class="block text-sm font-medium text-gray-700">Idioma:</label>
+      <select id="language" class="mt-1 block w-full p-2 border rounded">
+        <option value="es-ES">Español</option>
+        <option value="en-US">Inglés</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <textarea id="transcription" class="w-full h-96 p-2 border rounded" placeholder="Aquí aparecerá la transcripción..."></textarea>
+    </div>
+    <div class="flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0 justify-center">
+      <button id="startMic" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Iniciar Micrófono
+      </button>
+      <button id="stopMic" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        Detener Micrófono
+      </button>
+      <input type="file" id="uploadMP3" accept=".mp3" class="hidden">
+      <button id="uploadButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+        Cargar MP3
+      </button>
+      <button id="autocorrect" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+        Autocorregir
+      </button>
+      <button id="copyText" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+        Copiar Texto
+      </button>
+      <button id="pasteText" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+        Pegar Texto
+      </button>
+    </div>
+    <footer class="mt-6 text-center text-gray-600">
+      &copy; 2025 Jaime Romero. Prohibida la reproducción, modificación o uso comercial sin autorización.
+    </footer>
+  </div>
+  <script>
+    const startMic = document.getElementById('startMic');
+    const stopMic = document.getElementById('stopMic');
+    const transcription = document.getElementById('transcription');
+    const language = document.getElementById('language');
+    let recognition;
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      recognition = new(window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (event) => {
+        let interim = '';
+        let final = '';
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        transcription.value = final + interim;
+      };
+      recognition.onend = () => {
+        if (startMic.disabled === false) recognition.start();
+      };
+      startMic.addEventListener('click', () => {
+        recognition.lang = language.value;
+        recognition.start();
+        startMic.disabled = true;
+        stopMic.disabled = false;
+      });
+      stopMic.addEventListener('click', () => {
+        recognition.stop();
+        startMic.disabled = false;
+        stopMic.disabled = true;
+      });
+    } else {
+      alert('Tu navegador no soporta la API de reconocimiento de voz.');
+    }
+    document.getElementById('uploadButton').addEventListener('click', () => {
+      document.getElementById('uploadMP3').click();
+    });
+    document.getElementById('uploadMP3').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        alert('Archivo MP3 seleccionado: ' + file.name + '. Procesando...');
+      }
+    });
+    document.getElementById('autocorrect').addEventListener('click', () => {
+      let text = transcription.value;
+      text = text.replace(/\bk\b/gi, 'que');
+      transcription.value = text;
+    });
+    document.getElementById('copyText').addEventListener('click', () => {
+      transcription.select();
+      document.execCommand('copy');
+      alert('Texto copiado al portapapeles.');
+    });
+    document.getElementById('pasteText').addEventListener('click', async () => {
+      const text = await navigator.clipboard.readText();
+      transcription.value += text;
+    });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(() => {
+        console.log('Service Worker registrado');
+      });
+    }
+  </script>
+</body>
+
+</html>
